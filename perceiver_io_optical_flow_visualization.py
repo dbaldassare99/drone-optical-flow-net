@@ -21,8 +21,6 @@ Original file is located at
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install dependencies for Google Colab.
-# If you want to run this notebook on your own machine, you can skip this cell
 !pip install dm-haiku
 !pip install einops
 
@@ -192,6 +190,22 @@ def compute_optical_flow(params, rng, img1, img2, grid_indices,
   flows /= flow_count
   return flows
 
+
+def normalize(im):
+  return im / 255.0 * 2 - 1
+
+def visualize_flow(flow):
+  flow = np.array(flow)
+  # Use Hue, Saturation, Value colour model
+  hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
+  hsv[..., 2] = 255
+
+  mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+  hsv[..., 0] = ang / np.pi / 2 * 180
+  hsv[..., 1] = np.clip(mag * 255 / 24, 0, 255)
+  bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+  plt.imshow(bgr)
+
 #@title Load parameters from checkpoint
 
 !wget -O optical_flow_checkpoint.pystate https://storage.googleapis.com/perceiver_io/optical_flow_checkpoint.pystate
@@ -227,22 +241,6 @@ with open("sintel_frame1.png", "rb") as f:
 with open("sintel_frame2.png", "rb") as f:
   im2 = imageio.imread(f)
 
-#@title Image Utility Functions
-
-def normalize(im):
-  return im / 255.0 * 2 - 1
-
-def visualize_flow(flow):
-  flow = np.array(flow)
-  # Use Hue, Saturation, Value colour model
-  hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
-  hsv[..., 2] = 255
-
-  mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-  hsv[..., 0] = ang / np.pi / 2 * 180
-  hsv[..., 1] = np.clip(mag * 255 / 24, 0, 255)
-  bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-  plt.imshow(bgr)
 
 # Compute optical flow
 
